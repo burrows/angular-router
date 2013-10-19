@@ -1,0 +1,12 @@
+{
+  "name": "router",
+  "version": "0.0.1",
+  "dependencies": {
+    "statechart": "git://github.com/burrows/statechart.js.git#master"
+  },
+  "devDependencies": {
+    "jshint": "~1.1",
+    "jasmine-node": "~1.3"
+  }
+}
+

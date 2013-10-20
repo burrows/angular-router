@@ -21,11 +21,9 @@ angular.module('router', ['state'])
 
     function extractNames(pattern) {
       var names = pattern.match(nameOrSplatParam) || [], i, n;
-
       for (i = 0, n = names.length; i < n; i++) {
         names[i] = names[i].slice(1);
       }
-
       return names;
     }
 
@@ -41,7 +39,7 @@ angular.module('router', ['state'])
       },
 
       $get: function($rootScope, $location, $statechart) {
-        var _path;
+        var _path, _search;
 
         function extractParams(route, path) {
           var vals = route.regex.exec(path).slice(1), params = {}, i, n;
@@ -56,6 +54,11 @@ angular.module('router', ['state'])
         function handleLocationChange(path, search) {
           var params, i, n;
 
+          if (path === _path && angular.equals(search, _search)) { return; }
+
+          _path   = path;
+          _search = search;
+
           for (i = 0, n = routes.length; i < n; i++) {
             if ((match = routes[i].regex.exec(path))) {
               params = extractParams(routes[i], path);
@@ -66,24 +69,29 @@ angular.module('router', ['state'])
 
         return {
           start: function() {
-            // watch for changes to path and search - send to $statechart
+            _path   = $location.path();
+            _search = $location.search();
+
             $rootScope.$watch(function() {
               return [$location.path(), $location.search()];
-            }, function(val) {
-              handleLocationChange(val[0], val[1]);
-            }, true);
+            }, function(v) { handleLocationChange(v[0], v[1]); }, true);
 
-            // watch for changes to _path and search - sync to $location
+            $rootScope.$watch(function() { return [_path, _search]; },
+              function(v) { $location.path(v[0]).search(v[1]); }, true);
           },
 
           stop: function() {
           },
 
-          search: {},
+          path: function(v) {
+            if (arguments.length === 1) { _path = v || ''; return this; }
+            else { return _path; }
+          },
 
-          replace: function() { $location.replace(); },
-
-          inform: function(path) { _path = path; return this; }
+          search: function(v) {
+            if (arguments.length === 1) { _search = v || {}; return this; }
+            else { return _search; }
+          }
         };
       }
     };

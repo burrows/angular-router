@@ -39,7 +39,7 @@ angular.module('router', ['state'])
       },
 
       $get: function($rootScope, $location, $statechart) {
-        var _path, _search;
+        var _replace = false, _path, _search;
 
         function extractParams(route, path) {
           var vals = route.regex.exec(path).slice(1), params = {}, i, n;
@@ -69,15 +69,15 @@ angular.module('router', ['state'])
 
         return {
           start: function() {
-            _path   = $location.path();
-            _search = $location.search();
-
             $rootScope.$watch(function() {
               return [$location.path(), $location.search()];
             }, function(v) { handleLocationChange(v[0], v[1]); }, true);
 
             $rootScope.$watch(function() { return [_path, _search]; },
-              function(v) { $location.path(v[0]).search(v[1]); }, true);
+              function(v) {
+                $location.path(v[0]).search(v[1]);
+                if (_replace) { $location.replace(); _replace = false; }
+              }, true);
           },
 
           stop: function() {
@@ -91,7 +91,9 @@ angular.module('router', ['state'])
           search: function(v) {
             if (arguments.length === 1) { _search = v || {}; return this; }
             else { return _search; }
-          }
+          },
+
+          replace: function() { _replace = true; return this; }
         };
       }
     };

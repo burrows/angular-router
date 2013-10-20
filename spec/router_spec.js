@@ -300,6 +300,33 @@ describe('$router', function() {
       expect($router.search()).toEqual({b: 'c'});
     });
   });
+
+  describe('.replace', function() {
+    var $rootScope, $location, $statechart, $router;
+
+    beforeEach(module(function($routerProvider) {
+      $routerProvider.route('fooShow', '/foos/:id');
+    }));
+
+    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
+      $rootScope  = _$rootScope_;
+      $location   = _$location_;
+      $statechart = _$statechart_;
+      $router     = _$router_;
+
+      $location.path('/').search({});
+      $statechart.goto();
+      $router.start();
+      $rootScope.$digest();
+    }));
+
+    it('should call $location.replace() during the digest cycle', function() {
+      spyOn($location, 'replace');
+      $router.replace().path('/foos/2');
+      $rootScope.$digest();
+      expect($location.replace).toHaveBeenCalled();
+    });
+  });
 });
 
 }());

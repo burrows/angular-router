@@ -14,9 +14,11 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      'node_modules/statechart/statechart.js',
       'vendor/angular.js',
-      '*.js',
-      'spec/*_spec.js'
+      'spec/angular-mocks.js',
+      'spec/*_spec.js',
+      '*.js'
     ],
 
 

@@ -9,6 +9,7 @@ window.campaigns = [
 angular.module('app', ['state', 'router'])
   .config(function($routerProvider) {
     $routerProvider
+      .route('default', '')
       .route('campaigns', '/(campaigns)')
       .route('campaignShow', '/campaigns/:id');
   })
@@ -80,6 +81,7 @@ angular.module('app', ['state', 'router'])
       var id, filter, metric;
 
       switch (route) {
+        case 'default':
         case 'campaigns':
           this.goto('/index');
           break;

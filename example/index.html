@@ -1,0 +1,66 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="app.css">
+    <script src="statechart.js"></script>
+    <script src="angular.js"></script>
+    <script src="state.js"></script>
+    <script src="router.js"></script>
+    <script src="app.js"></script>
+  </head>
+
+  <body ng-app="app">
+    <div class="navbar">
+      <h2>Navbar</h2>
+    </div>
+
+    <div class="content" ng-controller="MainCtrl">
+      <div ng-include="state.contentTmpl"></div>
+    </div>
+
+    <div class="footer" ng-controller="FooterCtrl">
+      <pre>state: {{current()}}</pre>
+    </div>
+
+    <script type="text/ng-template" id="index.html">
+      <div ng-controller="IndexCtrl">
+        <h3>Index</h3>
+        <ul>
+          <li ng-repeat="campaign in data.campaigns">
+          <a href="#/campaigns/{{campaign.id}}">{{campaign.name}}</a>
+          </li>
+        </ul>
+      </div>
+    </script>
+
+    <script type="text/ng-template" id="show.html">
+      <div ng-controller="ShowCtrl">
+        <h3>Show</h3>
+        <label>
+          Filter:
+          <select ng-change="action('didSelectFilter', filter)" ng-model="filter">
+            <option value="all">All</option>
+            <option value="live">Live</option>
+            <option value="issues">Issues</option>
+            <option value="completed">Completed</option>
+          </select>
+        </label>
+        <label>
+          Metric:
+          <select ng-change="action('didSelectMetric', metric)" ng-model="metric">
+            <option value="conversions">Conversions</option>
+            <option value="pacing">Pacing</option>
+            <option value="delivery">Delivery</option>
+          </select>
+        </label>
+        <pre>{{state.selectedCampaign | json}}</pre>
+      </div>
+    </script>
+
+    <script type="text/ng-template" id="unknown_route.html">
+      <div ng-controller="UnknownRouteCtrl">
+      Unknown route: {{location.path()}}
+      </div>
+    </script>
+  </body>
+</html>
+

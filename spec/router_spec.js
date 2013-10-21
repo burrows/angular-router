@@ -3,25 +3,35 @@
 describe('$router', function() {
   beforeEach(module('router'));
 
+  beforeEach(module(function($routerProvider) {
+    $routerProvider
+      .route('fooIndex', '/foos')
+      .route('barIndex', '/bars')
+      .route('fooBarIndex', '/foos/bars')
+      .route('fooShow', '/foos/:id')
+      .route('search', '/search/:query/p:num')
+      .route('file', '/file/*path')
+      .route('twoSplats', '/foo/*splat1/bar/*splat2')
+      .route('regAndSplat', '/foos/:id/*splat')
+      .route('basic', '/basic(/opt)')
+      .route('doc', '/docs/:section(/:subsection)');
+  }));
+
+  beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
+    $rootScope  = _$rootScope_;
+    $location   = _$location_;
+    $statechart = _$statechart_;
+    $router     = _$router_;
+
+    $location.path('/').search({});
+    $statechart.goto();
+    $router.start();
+    $rootScope.$digest();
+
+    spyOn($statechart, 'send');
+  }));
+
   describe('with simple routes', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('fooIndex', '/foos');
-      $routerProvider.route('barIndex', '/foos/bars');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $router.start();
-
-      spyOn($statechart, 'send');
-    }));
-
     describe('upon a $location.path() change', function() {
       it('should send the didRouteTo action to the $statechart with the name of the matching route', function() {
         $location.path('/foos');
@@ -30,7 +40,7 @@ describe('$router', function() {
 
         $location.path('/foos/bars');
         $rootScope.$digest();
-        expect($statechart.send).toHaveBeenCalledWith('didRouteTo', 'barIndex', {}, {});
+        expect($statechart.send).toHaveBeenCalledWith('didRouteTo', 'fooBarIndex', {}, {});
       });
 
       it('should pass along the search params', function() {
@@ -79,24 +89,6 @@ describe('$router', function() {
   });
 
   describe('with routes with named params', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('fooShow', '/foos/:id');
-      $routerProvider.route('search', '/search/:query/p:num');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $router.start();
-
-      spyOn($statechart, 'send');
-    }));
-
     describe('upon a $location.path() change', function() {
       it('should send the didRouteTo action to the $statechart with the name of the matching route and extracted param values', function() {
         $location.path('/foos/123');
@@ -134,24 +126,6 @@ describe('$router', function() {
   });
 
   describe('with routes with splat params', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('file', '/file/*path');
-      $routerProvider.route('twoSplats', '/foo/*splat1/bar/*splat2');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $router.start();
-
-      spyOn($statechart, 'send');
-    }));
-
     describe('upon a $location.path() change', function() {
       it('should send the didRouteTo action to the $statechart with the name of the matching route and extracted splat param values', function() {
         $location.path('/file/some/long/path/thing');
@@ -169,56 +143,21 @@ describe('$router', function() {
   });
 
   describe('with routes with regular and splat params', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('foo', '/foos/:id/*splat');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $router.start();
-
-      spyOn($statechart, 'send');
-    }));
-
     describe('upon a $location.path() change', function() {
       it('should send the didRouteTo action to the $statechart with the name of the matching route and all extracted param values', function() {
         $location.path('/foos/123/a/bunch/of/stuff');
         $rootScope.$digest();
         expect($statechart.send)
-          .toHaveBeenCalledWith('didRouteTo', 'foo',
+          .toHaveBeenCalledWith('didRouteTo', 'regAndSplat',
             {id: '123', splat: 'a/bunch/of/stuff'}, {});
       });
     });
   });
 
   describe('with routes with optional sections', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('basic', '/foo(/bar)');
-      $routerProvider.route('doc', '/docs/:section(/:subsection)');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $router.start();
-
-      spyOn($statechart, 'send');
-    }));
-
     describe('upon a $location.path() change', function() {
       it('should match routes without optional segments', function() {
-        $location.path('/foo');
+        $location.path('/basic');
         $rootScope.$digest();
         expect($statechart.send)
           .toHaveBeenCalledWith('didRouteTo', 'basic', {}, {});
@@ -231,7 +170,7 @@ describe('$router', function() {
       });
 
       it('should match routes with optional segments', function() {
-        $location.path('/foo/bar');
+        $location.path('/basic/opt');
         $rootScope.$digest();
         expect($statechart.send)
           .toHaveBeenCalledWith('didRouteTo', 'basic', {}, {});
@@ -246,24 +185,6 @@ describe('$router', function() {
   });
 
   describe('.path', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('fooShow', '/foos/:id');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $location.path('/').search({});
-      $statechart.goto();
-      $router.start();
-      $rootScope.$digest();
-    }));
-
     it('should update $location.path() when given an argument', function() {
       $router.path('/foos/842');
       $rootScope.$digest();
@@ -271,7 +192,6 @@ describe('$router', function() {
     });
 
     it('should not cause the didRouteTo action to be sent to the statechart when given an argument', function() {
-      spyOn($statechart, 'send');
       $router.path('/foos/842');
       $rootScope.$digest();
       expect($statechart.send).not.toHaveBeenCalled();
@@ -285,24 +205,6 @@ describe('$router', function() {
   });
 
   describe('.search', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('fooShow', '/foos/:id');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $location.path('/').search({});
-      $statechart.goto();
-      $router.start();
-      $rootScope.$digest();
-    }));
-
     it('should update $location.search() when given an argument', function() {
       $router.search({foo: '1', bar: '2'});
       $rootScope.$digest();
@@ -310,7 +212,6 @@ describe('$router', function() {
     });
 
     it('should not cause the didRouteTo action to be sent to the statechart when given an argument', function() {
-      spyOn($statechart, 'send');
       $router.search({a: 'b'});
       $rootScope.$digest();
       expect($statechart.send).not.toHaveBeenCalled();
@@ -324,24 +225,6 @@ describe('$router', function() {
   });
 
   describe('.replace', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('fooShow', '/foos/:id');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $location.path('/').search({});
-      $statechart.goto();
-      $router.start();
-      $rootScope.$digest();
-    }));
-
     it('should call $location.replace() during the digest cycle', function() {
       spyOn($location, 'replace');
       $router.replace().path('/foos/2');
@@ -351,27 +234,6 @@ describe('$router', function() {
   });
 
   describe('.stop', function() {
-    var $rootScope, $location, $statechart, $router;
-
-    beforeEach(module(function($routerProvider) {
-      $routerProvider.route('fooIndex', '/foos');
-      $routerProvider.route('barIndex', '/bars');
-    }));
-
-    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
-      $rootScope  = _$rootScope_;
-      $location   = _$location_;
-      $statechart = _$statechart_;
-      $router     = _$router_;
-
-      $location.path('/').search({});
-      $statechart.goto();
-      $router.start();
-      $rootScope.$digest();
-
-      spyOn($statechart, 'send');
-    }));
-
     it('should stop routing location changes', function() {
       $location.path('/foos');
       $rootScope.$digest();

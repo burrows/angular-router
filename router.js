@@ -1,6 +1,7 @@
 angular.module('router', ['state'])
   .provider('$router', function() {
     var routes           = [];
+        unknownState     = null,
         optionalParam    = /\((.*?)\)/g,
         namedParam       = /(\(\?)?:\w+/g,
         splatParam       = /\*\w+/g,
@@ -28,13 +29,17 @@ angular.module('router', ['state'])
     }
 
     return {
-      route: function(name, pattern) {
+      route: function(pattern, states) {
         routes.push({
-          name: name,
           regex: buildRegex(pattern),
-          names: extractNames(pattern)
+          names: extractNames(pattern),
+          states: states
         });
+        return this;
+      },
 
+      unknown: function(state) {
+        unknownState = state;
         return this;
       },
 
@@ -52,7 +57,7 @@ angular.module('router', ['state'])
         }
 
         function handleLocationChange(path, search) {
-          var params, i, n;
+          var params, states, i, n;
 
           if (path === _path && angular.equals(search, _search)) { return; }
 
@@ -62,17 +67,26 @@ angular.module('router', ['state'])
           for (i = 0, n = routes.length; i < n; i++) {
             if ((match = routes[i].regex.exec(path))) {
               params = extractParams(routes[i], path);
+              states = typeof routes[i].states === 'function' ?
+                routes[i].states(params, search) : routes[i].states;
+
               try {
-                $statechart.send('didRouteTo', routes[i].name, params, search);
+                $statechart.goto(states, {
+                  context: {params: params, search: search}
+                });
               }
               catch (e) {
-                $statechart.send('didRouteToUnknown', $location.url());
+                if (unknownState) {
+                  $statechart.goto(unknownState, {context: $location.url()});
+                }
               }
               return;
             }
           }
 
-          $statechart.send('didRouteToUnknown', $location.url());
+          if (unknownState) {
+            $statechart.goto(unknownState, {context: $location.url()});
+          }
         }
 
         return {

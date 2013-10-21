@@ -9,8 +9,13 @@ window.campaigns = [
 angular.module('app', ['state', 'router'])
   .config(function($routerProvider) {
     $routerProvider
-      .route('campaigns', '/(campaigns)')
-      .route('campaignShow', '/campaigns/:id');
+      .route('', ['/index'])
+      .route('/campaigns', ['/index'])
+      .route('/campaigns/:id', function(_, search) {
+        var f = search.filter || 'all', m = search.metric || 'conversions';
+        return ['/show/filter/' + f, '/show/metric/' + m];
+      })
+      .unknown('/unknownRoute');
   })
 
   .run(function($rootScope, $statechart, $state, $router, $location) {
@@ -30,7 +35,8 @@ angular.module('app', ['state', 'router'])
     });
 
     $statechart.state('show', {isConcurrent: true}, function() {
-      this.enter = function(id) {
+      this.enter = function(ctx) {
+        var id = ctx.params.id;
         $router.path('/campaigns/' + id).search({});
         $state.contentTmpl      = 'show.html';
         $state.selectedCampaign = campaigns[id];

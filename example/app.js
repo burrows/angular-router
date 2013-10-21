@@ -14,6 +14,8 @@ angular.module('app', ['state', 'router'])
   })
 
   .run(function($rootScope, $statechart, $state, $router, $location) {
+    $statechart.trace = true;
+
     $statechart.state('start');
 
     $statechart.state('index', function() {

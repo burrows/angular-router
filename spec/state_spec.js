@@ -13,6 +13,23 @@ describe('state module', function() {
     spyOn($statechart, 'send');
   }));
 
+  describe('$statechart', function() {
+    it('should create a root state with no child states', function() {
+      expect($statechart.root()).toBe($statechart);
+      expect($statechart.substates).toEqual([]);
+    });
+
+    it('should set statechart.State.logger to the $log service', inject(function($log) {
+      expect(statechart.State.logger).toBe($log);
+    }));
+  });
+
+  describe('$state', function() {
+    it('should be an empty object', inject(function($state) {
+      expect($state).toEqual({});
+    }));
+  });
+
   describe('$rootScope.action', function() {
     it('should emit the "action" event', function() {
       var called;

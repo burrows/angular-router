@@ -349,6 +349,40 @@ describe('$router', function() {
       expect($location.replace).toHaveBeenCalled();
     });
   });
+
+  describe('.stop', function() {
+    var $rootScope, $location, $statechart, $router;
+
+    beforeEach(module(function($routerProvider) {
+      $routerProvider.route('fooIndex', '/foos');
+      $routerProvider.route('barIndex', '/bars');
+    }));
+
+    beforeEach(inject(function(_$rootScope_, _$location_, _$statechart_, _$router_) {
+      $rootScope  = _$rootScope_;
+      $location   = _$location_;
+      $statechart = _$statechart_;
+      $router     = _$router_;
+
+      $location.path('/').search({});
+      $statechart.goto();
+      $router.start();
+      $rootScope.$digest();
+
+      spyOn($statechart, 'send');
+    }));
+
+    it('should stop routing location changes', function() {
+      $location.path('/foos');
+      $rootScope.$digest();
+      expect($statechart.send).toHaveBeenCalledWith('didRouteTo', 'fooIndex', {}, {});
+
+      $router.stop();
+      $location.path('/bars');
+      $rootScope.$digest();
+      expect($statechart.send).not.toHaveBeenCalledWith('didRouteTo', 'barIndex', {}, {});
+    });
+  });
 });
 
 }());

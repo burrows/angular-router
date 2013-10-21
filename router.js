@@ -39,7 +39,7 @@ angular.module('router', ['state'])
       },
 
       $get: function($rootScope, $location, $statechart) {
-        var _replace = false, _path, _search;
+        var _replace = false, _path, _search, unwatch1, unwatch2;
 
         function extractParams(route, path) {
           var vals = route.regex.exec(path).slice(1), params = {}, i, n;
@@ -77,18 +77,22 @@ angular.module('router', ['state'])
 
         return {
           start: function() {
-            $rootScope.$watch(function() {
+            unwatch1 = $rootScope.$watch(function() {
               return [$location.path(), $location.search()];
             }, function(v) { handleLocationChange(v[0], v[1]); }, true);
 
-            $rootScope.$watch(function() { return [_path, _search]; },
-              function(v) {
-                $location.path(v[0]).search(v[1]);
-                if (_replace) { $location.replace(); _replace = false; }
-              }, true);
+            unwatch2 = $rootScope.$watch(function() {
+              return [_path, _search];
+            }, function(v) {
+              $location.path(v[0]).search(v[1]);
+              if (_replace) { $location.replace(); _replace = false; }
+            }, true);
           },
 
           stop: function() {
+            unwatch1(); unwatch2();
+            unwatch1 = unwatch2 = null;
+            return this;
           },
 
           path: function(v) {

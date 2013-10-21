@@ -66,6 +66,30 @@ angular.module('app', ['state', 'router'])
           $router.replace(); this.goto(metric);
         };
       });
+
+      this.state('modal', function() {
+        this.state('off', function() {
+          this.enter = function() {
+            delete $router.search().modal;
+            $state.showCampaignModal = false;
+          };
+
+          this.didToggleModal = function() {
+            $router.replace(); this.goto('../on');
+          };
+        });
+
+        this.state('on', function() {
+          this.enter = function() {
+            $router.search().modal = true;
+            $state.showCampaignModal = true;
+          };
+
+          this.didToggleModal = function() {
+            $router.replace(); this.goto('../off');
+          };
+        });
+      });
     });
 
     $statechart.state('unknownRoute', function() {
@@ -78,7 +102,7 @@ angular.module('app', ['state', 'router'])
     });
 
     $statechart.didRouteTo = function(route, params, search) {
-      var id, filter, metric;
+      var id, filter, metric, modal;
 
       switch (route) {
         case 'default':
@@ -89,9 +113,12 @@ angular.module('app', ['state', 'router'])
           id     = parseInt(params.id, 10);
           filter = search.filter || 'all';
           metric = search.metric || 'conversions';
-          this.goto('/show/filter/' + filter, '/show/metric/' + metric, {
-            context: id, force: true
-          });
+          modal  = search.modal ? 'on' : 'off';
+
+          this.goto('/show/filter/' + filter,
+                    '/show/metric/' + metric,
+                    '/show/modal/' + modal,
+                    {context: id, force: true});
           break;
       }
     };
@@ -123,6 +150,9 @@ angular.module('app', ['state', 'router'])
     $scope.state  = $state;
     $scope.filter = $state.selectedCampaignFilter;
     $scope.metric = $state.selectedCampaignMetric;
+    $scope.modalButtonLabel = function() {
+      return $state.showCampaignModal ? 'Close' : 'Open';
+    };
 
     $scope.$watch('state.selectedCampaignFilter', function(v) {
       $scope.filter = v;

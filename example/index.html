@@ -52,6 +52,10 @@
             <option value="delivery">Delivery</option>
           </select>
         </label>
+        <label>
+          Modal:
+          <button ng-click="action('didToggleModal')">{{modalButtonLabel()}}</button>
+        </label>
         <pre>{{state.selectedCampaign | json}}</pre>
       </div>
     </script>

@@ -62,9 +62,17 @@ angular.module('router', ['state'])
           for (i = 0, n = routes.length; i < n; i++) {
             if ((match = routes[i].regex.exec(path))) {
               params = extractParams(routes[i], path);
-              $statechart.send('didRouteTo', routes[i].name, params, search);
+              try {
+                $statechart.send('didRouteTo', routes[i].name, params, search);
+              }
+              catch (e) {
+                $statechart.send('didRouteToUnknown', $location.url());
+              }
+              return;
             }
           }
+
+          $statechart.send('didRouteToUnknown', $location.url());
         }
 
         return {

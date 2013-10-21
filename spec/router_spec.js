@@ -39,6 +39,28 @@ describe('$router', function() {
         expect($statechart.send)
           .toHaveBeenCalledWith('didRouteTo', 'fooIndex', {}, {a: '1', b: '2'});
       });
+
+      it("should send the didRouteToUnknown action to the $statechart if path doesn't match a known route", function() {
+        $location.path('/blah');
+        $rootScope.$digest();
+        expect($statechart.send).toHaveBeenCalledWith('didRouteToUnknown', '/blah');
+      });
+
+      it('should send the didRouteToUnknown action to the $statechart if the didRouteTo action raises an exception', function() {
+        var calls = [];
+
+        $statechart.send = function(action) {
+          calls.push([].slice.call(arguments));
+          if (action === 'didRouteTo') { throw new Error; }
+        };
+
+        $location.path('/foos');
+        $rootScope.$digest();
+
+        expect(calls.length).toBe(2);
+        expect(calls[0]).toEqual(['didRouteTo', 'fooIndex', {}, {}]);
+        expect(calls[1]).toEqual(['didRouteToUnknown', '/foos']);
+      });
     });
 
     describe('upon a $location.search() change', function() {

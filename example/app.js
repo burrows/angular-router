@@ -8,8 +8,9 @@ window.campaigns = [
 
 angular.module('app', ['state', 'router'])
   .config(function($routerProvider) {
-    $routerProvider.route('campaigns', '/(campaigns)');
-    $routerProvider.route('campaignShow', '/campaigns/:id');
+    $routerProvider
+      .route('campaigns', '/(campaigns)')
+      .route('campaignShow', '/campaigns/:id');
   })
 
   .run(function($rootScope, $statechart, $state, $router, $location) {
@@ -75,9 +76,12 @@ angular.module('app', ['state', 'router'])
     });
 
     $statechart.state('unknownRoute', function() {
-      this.enter = function() {
+      this.enter = function(url) {
         $state.contentTmpl = 'unknown_route.html';
+        $state.unknownUrl = url;
       };
+
+      this.exit = function() { delete $state.unknownUrl; };
     });
 
     $statechart.didRouteTo = function(route, params, search) {
@@ -98,8 +102,8 @@ angular.module('app', ['state', 'router'])
       }
     };
 
-    $statechart.didRouteToUnknown = function() {
-      this.goto('/unknownRoute');
+    $statechart.didRouteToUnknown = function(url) {
+      this.goto('/unknownRoute', {context: url});
     };
 
     $statechart.goto();
@@ -135,7 +139,7 @@ angular.module('app', ['state', 'router'])
     });
   })
 
-  .controller('UnknownRouteCtrl', function($scope, $location) {
-    $scope.location = $location;
+  .controller('UnknownRouteCtrl', function($scope, $state) {
+    $scope.state = $state;
   });
 

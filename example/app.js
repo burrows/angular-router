@@ -14,16 +14,6 @@ angular.module('app', ['state', 'router'])
   })
 
   .run(function($rootScope, $statechart, $state, $router, $location) {
-    var slice = Array.prototype.slice;
-
-    $rootScope.action = function(name) {
-      this.$emit.apply(this, ['action'].concat(slice.call(arguments)));
-    };
-
-    $rootScope.$on('action', function() {
-      $statechart.send.apply($statechart, slice.call(arguments, 1));
-    });
-
     $statechart.state('start');
 
     $statechart.state('index', function() {

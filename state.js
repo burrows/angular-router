@@ -12,7 +12,7 @@ angular.module('state', ['router'])
 
       route = $router.define(pattern, function(params, search) {
         _this.root().goto(_this.path(), {
-          context: angular.extend({}, params, search)
+          force: true, context: angular.extend({}, params, search)
         });
       });
 

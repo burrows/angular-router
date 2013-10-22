@@ -33,6 +33,7 @@ angular.module('app', ['state'])
       this.route('/campaigns/:id');
 
       this.enter(function(ctx) {
+        this.params({id: ctx.id});
         $state.contentTmpl      = 'show.html';
         $state.selectedCampaign = campaigns[ctx.id];
       });

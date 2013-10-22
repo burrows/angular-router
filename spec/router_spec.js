@@ -105,12 +105,6 @@ describe('$router', function() {
         expect(searchSpy).toHaveBeenCalledWith({query: 'some-query', num: '4'}, {});
       });
 
-      it('should decode param values', function() {
-        $location.path('/search/some%20query/p7');
-        $rootScope.$digest();
-        expect(searchSpy).toHaveBeenCalledWith({query: 'some query', num: '7'}, {});
-      });
-
       it('should update $router.route() and $router.params()', function() {
         expect($router.route()).toBeNull();
         $location.path('/foos/123');

@@ -34,7 +34,7 @@ angular.module('router', ['state'])
       var vals = route.regex.exec(path).slice(1), params = {}, i, n;
 
       for (i = 0, n = route.names.length; i < n; i++) {
-        params[route.names[i]] = vals[i] ? decodeURIComponent(vals[i]) : null;
+        params[route.names[i]] = vals[i] || null;
       }
 
       return params;

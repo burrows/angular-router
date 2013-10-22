@@ -76,6 +76,62 @@ describe('state module', function() {
       expect($statechart.send).toHaveBeenCalledWith('baz', 1, 2, 3);
     });
   });
+
+  describe('$router integration', function() {
+    var $location, $router;
+
+    beforeEach(inject(function(_$location_, _$router_) {
+      $location = _$location_;
+      $router = _$router_;
+
+      $statechart.state('start', function() {
+      });
+
+      $statechart.state('index', function() {
+        this.route('/foos');
+      });
+
+      $statechart.state('show', function() {
+        this.route('/foos/:id');
+        this.enter(function(ctx) {
+          this.params({id: ctx.id});
+        });
+      });
+
+      $statechart.goto();
+      $router.start();
+    }));
+
+    afterEach(function() { $router.stop(); });
+
+    describe('upon $location.path() changes', function() {
+      it('should trigger a transition to the state with the matching route', function() {
+        expect($statechart.current()).toEqual(['/start']);
+        $location.path('/foos');
+        $rootScope.$digest();
+        expect($statechart.current()).toEqual(['/index']);
+
+        $location.path('/foos/12');
+        $rootScope.$digest();
+        expect($statechart.current()).toEqual(['/show']);
+      });
+    });
+
+    describe('upon entering a state with a defined route', function() {
+      it('should update $location.path()', function() {
+        expect($location.path()).toEqual('');
+        expect($statechart.current()).toEqual(['/start']);
+
+        $statechart.goto('/index');
+        $rootScope.$digest();
+        expect($location.path()).toEqual('/foos');
+
+        $statechart.goto('/show', {context: {id: 9}});
+        $rootScope.$digest();
+        expect($location.path()).toEqual('/foos/9');
+      });
+    });
+  });
 });
 
 }());

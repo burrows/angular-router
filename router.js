@@ -5,13 +5,11 @@ angular.module('router', ['state'])
         splatParam       = /\*(\w+)/g,
         nameOrSplatParam = /[:*](\w+)/g,
         escapeRegex      = /[\-{}\[\]+?.,\\\^$|#\s]/g,
-        unknownHandler   = null,
         _route           = null,
         _params          = {},
         _search          = {},
-        _replace         = false,
-        modifiedRoute    = false,
-        unwatch1, unwatch2;
+        eq               = angular.equals,
+        unknownHandler, unwatch;
 
     function buildRegex(pattern) {
       var re = pattern
@@ -47,29 +45,22 @@ angular.module('router', ['state'])
     }
 
     function handleLocationChange(path, search) {
-      var i, n;
+      var params, i, n;
 
       for (i = 0, n = routes.length; i < n; i++) {
         if ((match = routes[i].regex.exec(path))) {
-          _route  = routes[i];
-          _params = extractParams(_route, path);
-          _search = search;
-          _route.callback(_params, _search);
+          params = extractParams(routes[i], path);
+          if (_route !== routes[i] || !eq(_params, params) || !eq(_search, search)) {
+            _route  = routes[i];
+            _params = extractParams(_route, path);
+            _search = search;
+            _route.callback(_params, _search);
+          }
           return;
         }
       }
 
       if (unknownHandler) { unknownHandler(path, search); }
-    }
-
-    function handleRouteChange(route, params, search) {
-      var path;
-
-      if (!route) { return; }
-
-      path = generatePath(route, params);
-      $location.path(path).search(search);
-      if (_replace) { $location.replace(); _replace = false; }
     }
 
     return {
@@ -89,50 +80,41 @@ angular.module('router', ['state'])
       unknown: function(callback) { unknownHandler = callback; return this; },
 
       start: function() {
-        unwatch1 = $rootScope.$watch(function() {
+        unwatch = $rootScope.$watch(function() {
           return [$location.path(), $location.search()];
-        }, function(v) {
-          if (!modifiedRoute) { handleLocationChange(v[0], v[1]); }
-        }, true);
-
-        unwatch2 = $rootScope.$watch(function() {
-          return [_route, _params, _search];
-        }, function() {
-          if (modifiedRoute) { handleRouteChange(_route, _params, _search); }
-          modifiedRoute = false;
-        }, true);
-
+        }, function(v) { handleLocationChange(v[0], v[1]); }, true);
         return this;
       },
 
       stop: function() {
-        unwatch1(); unwatch2();
-        unwatch1 = unwatch2 = null;
+        if (unwatch) { unwatch(); }
+        unwatch = null;
         return this;
       },
 
       route: function(route) {
         if (arguments.length === 0) { return _route; }
-        modifiedRoute = true;
-        return _route = route;
+        _route = route;
+        if (_route) { $location.path(generatePath(_route, _params)); }
+        return _route;
       },
 
       params: function(params, replace) {
         if (arguments.length === 0) { return _params; }
-        modifiedRoute = true;
-        return replace ? _params = params : angular.extend(_params, params);
+        _params = replace ? params : angular.extend(_params, params);
+        if (_route) { $location.path(generatePath(_route, _params)); }
+        return _params;
       },
 
       search: function(search, replace) {
         var k;
-
         if (arguments.length === 0) { return _search; }
-        modifiedRoute = true;
         _search = replace ? search : angular.extend(_search, search);
         for (k in _search) { if (_search[k] === false) { delete _search[k]; } }
+        $location.search(_search);
         return _search;
       },
 
-      replace: function() { _replace = true; return this; }
+      replace: function() { $location.replace(); return this; }
     };
   });

@@ -194,10 +194,11 @@ describe('$router', function() {
 
       it("should not trigger the route's callback when given a route object", function() {
         $router.route(indexRoute);
+        $rootScope.$digest();
         expect(indexSpy).not.toHaveBeenCalled();
       });
 
-      it('should reuturn the current route when called with no arguments', function() {
+      it('should return the current route when called with no arguments', function() {
         expect($router.route()).toBeNull();
         $router.route(indexRoute);
         expect($router.route()).toBe(indexRoute);

@@ -41,7 +41,7 @@ angular.module('app', ['state'])
 
       this.state('filter', function() {
         this.C(function(ctx) {
-          return ctx && ctx.filter ? ctx.filter : 'all';
+          return ctx && ctx.filter && this.resolve(ctx.filter) ? ctx.filter : 'all';
         });
 
         angular.forEach(['all', 'live', 'issues', 'completed'], function(name) {
@@ -60,7 +60,7 @@ angular.module('app', ['state'])
 
       this.state('metric', function() {
         this.C(function(ctx) {
-          return ctx && ctx.metric ? ctx.metric : 'pacing';
+          return ctx && ctx.metric && this.resolve(ctx.metric) ? ctx.metric : 'pacing';
         });
 
         angular.forEach(['conversions', 'pacing', 'delivery'], function(name) {

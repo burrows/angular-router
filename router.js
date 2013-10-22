@@ -124,9 +124,13 @@ angular.module('router', ['state'])
       },
 
       search: function(search, replace) {
+        var k;
+
         if (arguments.length === 0) { return _search; }
         modifiedRoute = true;
-        return replace ? _search = search : angular.extend(_search, search);
+        _search = replace ? search : angular.extend(_search, search);
+        for (k in _search) { if (_search[k] === false) { delete _search[k]; } }
+        return _search;
       },
 
       replace: function() { _replace = true; return this; }

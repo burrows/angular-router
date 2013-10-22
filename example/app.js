@@ -6,22 +6,21 @@ window.campaigns = [
   {id: 4, name: 'Campaign 4'}
 ];
 
-angular.module('app', ['state', 'router'])
-  .config(function($routerProvider) {
-    $routerProvider
-      .route('default', '')
-      .route('campaigns', '/(campaigns)')
-      .route('campaignShow', '/campaigns/:id');
-  })
-
-  .run(function($rootScope, $statechart, $state, $router, $location) {
+angular.module('app', ['state'])
+  .run(function($rootScope, $statechart, $state) {
     $statechart.trace = true;
+
+    $statechart.unknown(function(path) {
+      if (path === '' || path === '/') { $statechart.goto('/index'); }
+      else { $statechart.goto('/unknownRoute', {context: path}); }
+    });
 
     $statechart.state('start');
 
     $statechart.state('index', function() {
+      this.route('/campaigns');
+
       this.enter(function() {
-        $router.path('/campaigns').search({});
         $state.contentTmpl = 'index.html';
       });
 
@@ -31,62 +30,75 @@ angular.module('app', ['state', 'router'])
     });
 
     $statechart.state('show', {isConcurrent: true}, function() {
-      this.enter(function(id) {
-        $router.path('/campaigns/' + id).search({});
+      this.route('/campaigns/:id');
+
+      this.enter(function(ctx) {
         $state.contentTmpl      = 'show.html';
-        $state.selectedCampaign = campaigns[id];
+        $state.selectedCampaign = campaigns[ctx.id];
       });
 
       this.exit(function() { delete $state.selectedCampaign; });
 
       this.state('filter', function() {
+        this.C(function(ctx) {
+          return ctx && ctx.filter ? ctx.filter : 'all';
+        });
+
         angular.forEach(['all', 'live', 'issues', 'completed'], function(name) {
           this.state(name, function() {
             this.enter(function() {
-              $router.search().filter = $state.selectedCampaignFilter = name;
+              this.search({filter: name});
+              $state.selectedCampaignFilter = name;
             });
           });
         }, this);
 
         this.action('didSelectFilter', function(filter) {
-          $router.replace(); this.goto(filter);
+          this.replace(); this.goto(filter);
         });
       });
 
       this.state('metric', function() {
+        this.C(function(ctx) {
+          return ctx && ctx.metric ? ctx.metric : 'pacing';
+        });
+
         angular.forEach(['conversions', 'pacing', 'delivery'], function(name) {
           this.state(name, function() {
             this.enter(function() {
-              $router.search().metric = $state.selectedCampaignMetric = name;
+              this.search({metric: name});
+              $state.selectedCampaignMetric = name;
             });
           });
         }, this);
 
         this.action('didSelectMetric', function(metric) {
-          $router.replace(); this.goto(metric);
+          this.replace(); this.goto(metric);
         });
       });
 
       this.state('modal', function() {
+        this.C(function(ctx) { return ctx && ctx.modal ? './on' : './off'; });
+
         this.state('off', function() {
           this.enter(function() {
-            delete $router.search().modal;
+            this.search({modal: false});
             $state.showCampaignModal = false;
           });
 
           this.action('didToggleModal', function() {
-            $router.replace(); this.goto('../on');
+            this.replace(); this.goto('../on');
           });
         });
 
         this.state('on', function() {
           this.enter(function() {
-            $router.search().modal = true;
+            this.search({modal: true});
             $state.showCampaignModal = true;
           });
 
           this.action('didToggleModal', function() {
-            $router.replace(); this.goto('../off');
+            this.replace(); this.goto('../off');
           });
         });
       });
@@ -101,32 +113,6 @@ angular.module('app', ['state', 'router'])
       this.exit(function() { delete $state.unknownUrl; });
     });
 
-    $statechart.action('didRouteTo', function(route, params, search) {
-      var id, filter, metric, modal;
-
-      switch (route) {
-        case 'default':
-        case 'campaigns':
-          this.goto('/index');
-          break;
-        case 'campaignShow':
-          id     = parseInt(params.id, 10);
-          filter = search.filter || 'all';
-          metric = search.metric || 'conversions';
-          modal  = search.modal ? 'on' : 'off';
-
-          this.goto('/show/filter/' + filter,
-                    '/show/metric/' + metric,
-                    '/show/modal/' + modal,
-                    {context: id, force: true});
-          break;
-      }
-    });
-
-    $statechart.action('didRouteToUnknown', function(url) {
-      this.goto('/unknownRoute', {context: url});
-    });
-
     $statechart.goto();
   })
 
@@ -136,10 +122,8 @@ angular.module('app', ['state', 'router'])
     $scope.state = $state;
   })
 
-  .controller('FooterCtrl', function($scope, $statechart, $router) {
+  .controller('FooterCtrl', function($scope, $statechart) {
     $scope.current = function() { return $statechart.current().join(', '); };
-    $scope.route = $router.route;
-    $scope.routeParams = $router.params;
   })
 
   .controller('IndexCtrl', function($scope) {

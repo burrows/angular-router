@@ -1,14 +1,12 @@
-# AngularJS Router with Statechart Integration
+# AngularJS Statechart with Routing
 
-The `$router` object is a wrapper around angular's `$location` service that integrates with a statechart. It works by observing changes to the `$location.path()` and `$location.search()` values and triggers a `didRouteTo` action on the `$statechart` based on the matching route. Routes are defined with a name and pattern. The name of the matching route is passed along with the `didRouteTo` action with the current values of `$location.path()` and `$location.search()`.
+This project contains two angular services: `$router` and `$statechart`.
 
-The `didRouteTo` action handler should be defined on the root of your statechart. It is responsible for mapping the matching route and search params to a particular state or set of states. It should then trigger a transition to the new state(s) using the `goto` method.
+The `$router` service is a dead simple router object that is built on top of the `$location` service. It allows you define routes as patterns with a callback that is invoked when a URL change matches the pattern. You can also set the current route and params on the `$router` to cause it to update the browser's URL.
 
-When you want to update the current URL upon entering a new state, the `$router.path()` and `$router.search()` methods can be used to set the current path and search params.
+The `$statechart` service is a wrapper around the [statechart.js](https://github.com/burrows/statechart.js) project. It allows you to easily define a statechart to manage the state of your angular application. Additionally, it enhances the `State` objects to give them a hook into the `$router` service. You can define routes directly on your states using the `route` method and the internal wiring is hooked up for you automatically. When states with a defined route are entered, the URL is automatically updated and when URL changes are detected, a transition to the state with the matching route is automatically triggered.
 
-State concurrency can be managed with the search params. The `didRouteTo` action handler can use them to map to an array of states and the `enter` method of each concurrent state can update a corresponding search param.
-
-If the user changes the browser's URL to something that doesn't match any of the defined routes, then the `didRouteToUnknown` action is sent to the statechart along with the current URL.
+One particular feature worth mentioning is that the approach to routing used here works nicely with concurrent states. You would typically define a route at the state containing concurrent states. The concurrent states can either be tracked by separate params in the route pattern or by using the `$location.search()` params. When each concurrent state is entered, it should update either `$router.params()` or `$router.search()` to record itself. Then, when the next `$digest` cycle is run, the current URL to use is generated based off of the currently set route, params and search objects. See `example/app.js` to see an example of how this is done.
 
 ## Setup
 

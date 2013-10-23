@@ -29,7 +29,7 @@ angular.module('app', ['state'])
       });
     });
 
-    $statechart.state('show', {isConcurrent: true}, function() {
+    $statechart.state('show', {concurrent: true}, function() {
       this.route('/campaigns/:id');
 
       this.enter(function(ctx) {
